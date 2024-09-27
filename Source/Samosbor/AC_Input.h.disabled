@@ -1,0 +1,55 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "EnhancedInputComponent.h"
+#include "InputActionValue.h"
+#include "AC_Input.generated.h"
+
+// Forward declare Input Action class
+class UInputAction;
+
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class SAMOSBOR_API UAC_Input : public UActorComponent
+{
+        GENERATED_BODY()
+
+    public:    
+        // Constructor of the component
+        UAC_Input();
+
+    protected:
+        // Called when the game starts
+        virtual void BeginPlay() override;
+
+    public:    
+        // Update the component every frame
+        virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+        // Input binding setup
+        void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent);
+
+        // Handle movement input
+        void Move(const FInputActionValue& Value);
+
+        // Handle look input
+        void Look(const FInputActionValue& Value);
+
+        // Functions for jumping
+        void StartJump(const FInputActionValue& Value);
+        void StopJump(const FInputActionValue& Value);
+
+        // Input Action references for binding to Enhanced Input
+        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input")
+        UInputAction* MoveAction;
+
+        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input")
+        UInputAction* LookAction;
+
+        UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input")
+        UInputAction* JumpAction;
+
+    private:
+        // Store the pointer to Input Component
+        UInputComponent* InputComponent;
+};

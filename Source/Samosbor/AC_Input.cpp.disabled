@@ -1,0 +1,102 @@
+#include "AC_Input.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/Controller.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+
+// Constructor of the component
+UAC_Input::UAC_Input()
+{
+    PrimaryComponentTick.bCanEverTick = true;
+}
+
+// Called when the game starts
+void UAC_Input::BeginPlay()
+{
+    Super::BeginPlay();
+
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character)
+    {
+        InputComponent = Character->InputComponent;
+    }
+}
+
+// Component's main update loop
+void UAC_Input::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+// Input binding setup
+void UAC_Input::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+    // Check if we are using Enhanced Input Action
+    UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+    if (EnhancedInput)
+    {
+        // Bind Look Input
+        EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &UAC_Input::Look);
+
+        // Bind Jump Input with custom handlers
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &UAC_Input::StartJump);
+        EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &UAC_Input::StopJump);
+
+        // Bind Move Input
+        EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &UAC_Input::Move);
+    }
+}
+
+// Look handling
+void UAC_Input::Look(const FInputActionValue& Value)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character && Character->Controller)
+    {
+        FVector2D LookValue = Value.Get<FVector2D>();
+        Character->AddControllerYawInput(LookValue.X);
+        Character->AddControllerPitchInput(LookValue.Y);
+    }
+}
+
+// Move handling
+void UAC_Input::Move(const FInputActionValue& Value)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character && Character->Controller)
+    {
+        FVector2D MoveValue = Value.Get<FVector2D>();
+
+        // Get movement direction and apply movement input in the corresponding direction
+        FRotator Rotation = Character->Controller->GetControlRotation();
+        FRotator YawRotation(0, Rotation.Yaw, 0);
+
+        // Forward/backward direction
+        FVector DirectionForward = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+        Character->AddMovementInput(DirectionForward, MoveValue.Y);
+
+        // Left/right direction
+        FVector DirectionRight = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+        Character->AddMovementInput(DirectionRight, MoveValue.X);
+    }
+}
+
+// Function to start jumping
+void UAC_Input::StartJump(const FInputActionValue& Value)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character)
+    {
+        Character->Jump();
+    }
+}
+
+// Function to stop jumping
+void UAC_Input::StopJump(const FInputActionValue& Value)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (Character)
+    {
+        Character->StopJumping();
+    }
+}
